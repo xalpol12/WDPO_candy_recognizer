@@ -5,6 +5,56 @@ import numpy as np
 #HSV values for different colors:
 
 
+max_value = 255
+max_value_H = 360 // 2
+low_H = 0
+low_S = 0
+low_V = 0
+high_H = max_value_H
+high_S = max_value
+high_V = max_value
+window_trackbar_name = "Trackbars"
+low_H_name = 'Low H'
+low_S_name = 'Low S'
+low_V_name = 'Low V'
+high_H_name = 'High H'
+high_S_name = 'High S'
+high_V_name = 'High V'
+
+#on_change trackbar behaviour:
+def on_low_H_thresh_trackbar(val):
+    global low_H, high_H
+    low_H = val
+    low_H = min(high_H-1, low_H)
+    cv2.setTrackbarPos(low_H_name, window_trackbar_name, low_H)
+def on_high_H_thresh_trackbar(val):
+    global low_H, high_H
+    high_H = val
+    high_H = max(high_H, low_H+1)
+    cv2.setTrackbarPos(high_H_name, window_trackbar_name, high_H)
+def on_low_S_thresh_trackbar(val):
+    global low_S, high_S
+    low_S = val
+    low_S = min(high_S-1, low_S)
+    cv2.setTrackbarPos(low_S_name, window_trackbar_name, low_S)
+def on_high_S_thresh_trackbar(val):
+    global low_S, high_S
+    high_S = val
+    high_S = max(high_S, low_S+1)
+    cv2.setTrackbarPos(high_S_name, window_trackbar_name, high_S)
+def on_low_V_thresh_trackbar(val):
+    global low_V, high_V
+    low_V = val
+    low_V = min(high_V-1, low_V)
+    cv2.setTrackbarPos(low_V_name, window_trackbar_name, low_V)
+
+def on_high_V_thresh_trackbar(val):
+    global low_V, high_V
+    high_V = val
+    high_V = max(high_V, low_V+1)
+    cv2.setTrackbarPos(high_V_name, window_trackbar_name, high_V)
+
+
 def get_images_dir():
     image_dir = r'C:\Users\dawidexpompa2000\Desktop\Srudia\PO5_WDPO\Laby\WDPO_candy_recognizer\data'
     image_dir = image_dir.replace('\\', '/')  #change backslashes to forward slashes
@@ -15,7 +65,6 @@ def get_next_image(index, image_dir, image_list, low_HSV, high_HSV):
     next_image = cv2.imread(os.path.join(image_dir, image_list[index]))
     next_image_processed = process_image(next_image, low_HSV, high_HSV)
     mask = create_mask(next_image_processed)
-    contours = get_contours(mask)
     return next_image, mask
 
 
@@ -62,70 +111,48 @@ def get_candy_count(contours):
 
 
 def main():
-    def empty_callback(value):
-        pass
-
-    max_value = 255
-    max_value_H = 360 // 2
-    low_H = 0
-    low_S = 0
-    low_V = 0
-    high_H = max_value_H
-    high_S = max_value
-    high_V = max_value
-    window_trackbar_name = "Trackbars"
-    low_H_name = 'Low H'
-    low_S_name = 'Low S'
-    low_V_name = 'Low V'
-    high_H_name = 'High H'
-    high_S_name = 'High S'
-    high_V_name = 'High V'
-    low_HSV = np.array([180, 255, 255])
-    high_HSV = np.array([0, 0, 0])
+    global low_H, low_S, low_V, high_H, high_S, high_V, window_trackbar_name
 
     image_dir = get_images_dir()
     image_list = os.listdir(image_dir)
     current_image_index = 0
     image, mask = get_next_image(current_image_index, image_dir, image_list,
-                                 low_HSV, high_HSV)
+                                 np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
 
     cv2.namedWindow('image', cv2.WINDOW_NORMAL)
     cv2.namedWindow(window_trackbar_name, cv2.WINDOW_NORMAL)
 
     # create trackbars:
-    cv2.createTrackbar(low_H_name, window_trackbar_name, low_H, max_value_H, empty_callback)
-    cv2.createTrackbar(high_H_name, window_trackbar_name, high_H, max_value_H, empty_callback)
-    cv2.createTrackbar(low_S_name, window_trackbar_name, low_S, max_value, empty_callback)
-    cv2.createTrackbar(high_S_name, window_trackbar_name, high_S, max_value, empty_callback)
-    cv2.createTrackbar(low_V_name, window_trackbar_name, low_V, max_value, empty_callback)
-    cv2.createTrackbar(high_V_name, window_trackbar_name, high_V, max_value, empty_callback)
+    cv2.createTrackbar(low_H_name, window_trackbar_name, low_H, max_value_H, on_low_H_thresh_trackbar)
+    cv2.createTrackbar(high_H_name, window_trackbar_name, high_H, max_value_H, on_high_H_thresh_trackbar)
+    cv2.createTrackbar(low_S_name, window_trackbar_name, low_S, max_value, on_low_S_thresh_trackbar)
+    cv2.createTrackbar(high_S_name, window_trackbar_name, high_S, max_value, on_high_S_thresh_trackbar)
+    cv2.createTrackbar(low_V_name, window_trackbar_name, low_V, max_value, on_low_V_thresh_trackbar)
+    cv2.createTrackbar(high_V_name, window_trackbar_name, high_V, max_value, on_high_V_thresh_trackbar)
 
     while True:
-        low_HSV = np.array([cv2.getTrackbarPos(low_H_name, window_trackbar_name),
-                            cv2.getTrackbarPos(low_S_name, window_trackbar_name),
-                            cv2.getTrackbarPos(low_V_name, window_trackbar_name)])
 
-        high_HSV = np.array([cv2.getTrackbarPos(high_H_name, window_trackbar_name),
-                             cv2.getTrackbarPos(high_S_name, window_trackbar_name),
-                             cv2.getTrackbarPos(high_V_name, window_trackbar_name)])
-
-        in_range = process_image(image, low_HSV, high_HSV)
-        cv2.imshow(window_trackbar_name, in_range)
+        in_range = process_image(image, np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         blended_contours = blend_with_mask(image, mask)
         cv2.drawContours(blended_contours, get_contours(mask), -1, (255,0,0), 3)
+
+        cv2.imshow(window_trackbar_name, in_range)
         cv2.imshow('image', blended_contours)
 
+        # switching images using 'w' and 'q'
         key = cv2.waitKey(0)
         if key == ord('q'):
             current_image_index -= 1
             if current_image_index < 0:
                 current_image_index = len(image_list) - 1
-            image, mask = get_next_image(current_image_index, image_dir, image_list, low_HSV, high_HSV)
+            image, mask = get_next_image(current_image_index, image_dir, image_list,
+                                         np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         elif key == ord('w'):
             current_image_index += 1
             if current_image_index >= len(image_list):
                 current_image_index = 0
-            image, mask = get_next_image(current_image_index, image_dir, image_list, low_HSV, high_HSV)
+            image, mask = get_next_image(current_image_index, image_dir, image_list,
+                                         np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         else:
             break
 
