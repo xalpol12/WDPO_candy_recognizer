@@ -1,8 +1,13 @@
 import os
 import cv2
 import numpy as np
+import json
 
 #HSV values for different colors:
+#green low_hsv = [44, 121, 35]  high_hsv = [86, 255, 229]
+#purple (do sprawdzenia) low_hsv = [106, 52, 49] high_hsv = [178, 174, 115]
+#red low_hsv = [106, 155, 62] high_hsv = [123, 255, 252]
+#yellow low_hsv = [88, 163, 88] high_hsv = [115, 239, 246]
 
 
 max_value = 255
@@ -84,7 +89,7 @@ def resize_image(image, scale):
 
 
 def create_mask(mask):
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     mask_close = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     mask_open = cv2.morphologyEx(mask_close,cv2.MORPH_OPEN, kernel)
     return mask_open
@@ -99,15 +104,18 @@ def blend_with_mask(image, mask):
     mask_color = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
     blended = cv2.addWeighted(image, 1, mask_color, 1, 0)
     return blended
+# 3072 x 4080 = 12 533 760
+# 55 x 53 = 2 915
 
 
-def get_candy_count(contours):
+def get_candy_count(contours, image):
+    height = 0; width = 0
+    height, width = image.shape[:2]
     candy_count = 0
-    for i in range(len(contours)):
-        candy_count += 1
+    for contour in contours:
+        if cv2.contourArea(contour) > 0.0003 * height * width:
+            candy_count += 1
     return candy_count
-
-
 
 
 def main():
@@ -118,6 +126,12 @@ def main():
     current_image_index = 0
     image, mask = get_next_image(current_image_index, image_dir, image_list,
                                  np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
+
+    #json import
+    with open('sources/the_truth.json') as user_file:
+        reference_json = json.load(user_file)
+        # print(reference_json['00.jpg']['red'])
+
 
     cv2.namedWindow('image', cv2.WINDOW_NORMAL)
     cv2.namedWindow(window_trackbar_name, cv2.WINDOW_NORMAL)
@@ -140,7 +154,7 @@ def main():
         cv2.imshow('image', blended_contours)
 
         # switching images using 'w' and 'q'
-        key = cv2.waitKey(0)
+        key = cv2.waitKey(10)
         if key == ord('q'):
             current_image_index -= 1
             if current_image_index < 0:
@@ -153,7 +167,7 @@ def main():
                 current_image_index = 0
             image, mask = get_next_image(current_image_index, image_dir, image_list,
                                          np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
-        else:
+        elif key == 27:
             break
 
     # Destroy the window
