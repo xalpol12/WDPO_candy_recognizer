@@ -33,6 +33,7 @@ high_S_name = 'High S'
 high_V_name = 'High V'
 area_name = "Area"  # area = (one_candy_area / picture_area) * 100
 
+
 #on_change trackbar behaviour:
 def on_low_H_thresh_trackbar(val):
     global low_H, high_H
@@ -67,12 +68,11 @@ def on_high_V_thresh_trackbar(val):
     cv2.setTrackbarPos(high_V_name, window_trackbar_name, high_V)
 def on_area_V_thresh_trackbar(val):
     global area_V
-    cv2.setTrackbarPos(val, window_trackbar_name, area_V)
+    cv2.setTrackbarPos(area_name, window_trackbar_name, val)
     area_V = val / 10000  #real area value is between 0.0001 - 0.1
 
 
-def save_hsv_config():
-    global hsv_json
+def update_current_color_config():  #update chosen color with parameters from trackbars
     values = {'low_H': low_H,
               'low_S': low_S,
               'low_V': low_V,
@@ -81,14 +81,45 @@ def save_hsv_config():
               'high_V': high_V,
               'area_V': area_V}
     configuration = {selected_color: values}
-    hsv_json[selected_color] = values
+    return configuration
+
+
+def save_hsv_config():  #update json file that stores config for all colors
+    global hsv_json
+    hsv_json[selected_color] = update_current_color_config()
     with open('sources/hsv_config.json', 'w') as user_file:
         # json.dump(configuration, user_file)
         json.dump(hsv_json, user_file)
 
 
+def get_color_hsv_config(color):  #pass color name, get config for low and high values
+    global hsv_json
+    low_values = [[hsv_json[color]["low_H"]],
+                  [hsv_json[color]["low_S"]],
+                  [hsv_json[color]["low_V"]]]
+    high_values = [[hsv_json[color]["high_H"]],
+                   [hsv_json[color]["high_S"]],
+                   [hsv_json[color]["high_V"]]]
+    return low_values, high_values
 
-def get_images_dir():
+
+def get_current_hsv_config():
+    global hsv_json
+    # fixed_hsv_values_l = np.array([[106, 155, 62], [88, 163, 88],
+    #                                [44, 121, 35], [106, 52, 49]]) #green, purple, red, yellow settings
+    # fixed_hsv_values_h = np.array([[123, 255, 252], [115, 239, 246],
+    #                                [86, 255, 229], [178, 174, 115]])
+    hsv_values_low = []; hsv_values_high = []
+    hsv_json[selected_color] = update_current_color_config()
+    colors = ['red', 'yellow', 'green', 'purple']
+    for color in colors:
+        low, high = get_color_hsv_config(color)
+        hsv_values_low.append(low)
+        hsv_values_high.append(high)
+    return np.array(hsv_values_low), np.array(hsv_values_high)
+
+
+def get_images_dir():  #stores and returns datapath to a folder with sample images
     image_dir = r'C:\Users\dawidexpompa2000\Desktop\Srudia\PO5_WDPO\Laby\WDPO_candy_recognizer\data'
     image_dir = image_dir.replace('\\', '/')  #change backslashes to forward slashes
     return image_dir
@@ -157,10 +188,6 @@ def main():
     image_dir = get_images_dir()
     image_list = os.listdir(image_dir)
     current_image_index = 0
-    fixed_hsv_values_l = np.array([[106, 155, 62], [88, 163, 88],
-                                   [44, 121, 35], [106, 52, 49]]) #green, purple, red, yellow settings
-    fixed_hsv_values_h = np.array([[123, 255, 252], [115, 239, 246],
-                                   [86, 255, 229], [178, 174, 115]])
     image, mask = get_next_image(current_image_index, image_dir, image_list,
                                  np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
 
@@ -170,7 +197,6 @@ def main():
 
 
     cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-    cv2.namedWindow('in_range', cv2.WINDOW_NORMAL)
     cv2.namedWindow(window_trackbar_name, cv2.WINDOW_NORMAL)
 
     # create trackbars:
@@ -189,8 +215,7 @@ def main():
         cv2.drawContours(blended_contours, get_contours(mask), -1, (255,0,0), 3)
 
         #for candies detection:
-        cv2.imshow(window_trackbar_name, '')
-        cv2.imshow('in_range', in_range)
+        cv2.imshow(window_trackbar_name, in_range)
         cv2.imshow('image', blended_contours)
 
         # switching images using 'w' and 'q', detect using current setting 'd', save config 'esc'
@@ -208,8 +233,9 @@ def main():
             image, mask = get_next_image(current_image_index, image_dir, image_list,
                                          np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         elif key == ord('d'):
+            hsv_config_low, hsv_config_high =  get_current_hsv_config()
             filename, candies = detect_candies(current_image_index, image_dir, image_list,
-                                               fixed_hsv_values_l, fixed_hsv_values_h)
+                                               hsv_config_low, hsv_config_high)
             print("Real values: ", filename, reference_json[filename])
             print("Estimated values: ", filename, candies)
         elif key == 27:
