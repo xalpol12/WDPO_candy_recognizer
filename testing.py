@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import json
+from tqdm import tqdm
 
 #HSV values for different colors:
 #green low_hsv = [44, 121, 35]  high_hsv = [86, 255, 229]
@@ -185,6 +186,35 @@ def detect_candies(index, img_dir, img_names, hsv_l, hsv_h):
     return img_names[index], {'red': candies[0], 'yellow': candies[1], 'green': candies[2], 'purple': candies[3]}
 
 
+def detect_candies_all(img_dir, img_names, hsv_l, hsv_h, reference_json):
+    index = 0
+    y_real = []
+    y_estimated = []
+    while index < tqdm(len(img_names)):
+        filename, candies = detect_candies(index, img_dir, img_names, hsv_l, hsv_h)
+        y_real.append(reference_json[filename])
+        y_estimated.append(candies)
+        index += 1
+    MARPE = calculate_MARPE(y_real, y_estimated)
+    return MARPE
+
+
+def calculate_MARPE(y_real, y_estimated):
+    colors = ['red', 'yellow', 'green', 'purple']
+    mean_abs_error = 0
+    abs_error = 0
+    sum_real = 0
+    for el in range(len(y_real)):
+        for color in colors:
+            abs_error += abs(y_real[el][color] - y_estimated[el][color])
+            sum_real += y_real[el][color]
+        mean_abs_error += (abs_error/sum_real)
+    return mean_abs_error * (100/len(y_real))
+
+
+
+
+
 def main():
     global low_H, low_S, low_V, high_H, high_S, high_V, window_trackbar_name, area_V
 
@@ -241,6 +271,12 @@ def main():
                                                hsv_config_low, hsv_config_high)
             print("Real values: ", filename, reference_json[filename])
             print("Estimated values: ", filename, candies)
+        elif key == ord('p'):
+            hsv_config_low, hsv_config_high = get_current_hsv_config()
+            MARPE = detect_candies_all(image_dir, image_list,
+                               hsv_config_low, hsv_config_high, reference_json)
+            print(MARPE)
+
         elif key == 27:
             save_hsv_config()
             break
