@@ -7,7 +7,11 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
-
+#HSV values for different colors:
+#green low_hsv = [44, 121, 35]  high_hsv = [86, 255, 229]
+#purple (do sprawdzenia) low_hsv = [106, 52, 49] high_hsv = [178, 174, 115]
+#red low_hsv = [106, 155, 62] high_hsv = [123, 255, 252]
+#yellow low_hsv = [88, 163, 88] high_hsv = [115, 239, 246]
 
 def detect(img_path: str) -> Dict[str, int]:
     """Object detection function, according to the project description, to implement.

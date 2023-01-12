@@ -9,15 +9,21 @@ import json
 #red low_hsv = [106, 155, 62] high_hsv = [123, 255, 252]
 #yellow low_hsv = [88, 163, 88] high_hsv = [115, 239, 246]
 
+with open('sources/hsv_config.json') as user_file:
+    hsv_json = json.load(user_file)
+
+selected_color = 'yellow'
 
 max_value = 255
 max_value_H = 360 // 2
-low_H = 0
-low_S = 0
-low_V = 0
-high_H = max_value_H
-high_S = max_value
-high_V = max_value
+max_area = 1000
+low_H = hsv_json[selected_color]["low_H"]
+low_S = hsv_json[selected_color]["low_S"]
+low_V = hsv_json[selected_color]["low_V"]
+area_V = hsv_json[selected_color]["area_V"] #TODO: multiply by 10000 when assigning to trackbar
+high_H = hsv_json[selected_color]["high_H"]
+high_S = hsv_json[selected_color]["high_S"]
+high_V = hsv_json[selected_color]["high_V"]
 window_trackbar_name = "Trackbars"
 low_H_name = 'Low H'
 low_S_name = 'Low S'
@@ -25,6 +31,7 @@ low_V_name = 'Low V'
 high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
+area_name = "Area"
 
 #on_change trackbar behaviour:
 def on_low_H_thresh_trackbar(val):
@@ -58,6 +65,24 @@ def on_high_V_thresh_trackbar(val):
     high_V = val
     high_V = max(high_V, low_V+1)
     cv2.setTrackbarPos(high_V_name, window_trackbar_name, high_V)
+def on_area_V_thresh_trackbar(val):
+    global area_V
+    cv2.setTrackbarPos(val, window_trackbar_name, area_V)
+    area_V = val / 10000
+
+def save_hsv_config():
+    values = {'low_H': low_H,
+              'low_S': low_S,
+              'low_V': low_V,
+              'high_H': high_H,
+              'high_S': high_S,
+              'high_V': high_V,
+              'area_V': area_V}
+    configuration = {selected_color: values}
+
+    with open('sources/hsv_config.json', 'w') as user_file:
+        json.dump(configuration, user_file)
+
 
 
 def get_images_dir():
@@ -79,13 +104,6 @@ def process_image(image, low_HSV, high_HSV):
     filtered = cv2.bilateralFilter(gray, 9, 20, 10)
     threshold = cv2.inRange(filtered, low_HSV, high_HSV)
     return threshold
-
-
-def resize_image(image, scale):
-    width = int(image.shape[1] * scale)
-    height = int(image.shape[0] * scale)
-    image = cv2.resize(image, (width, height), interpolation = cv2.INTER_NEAREST)
-    return image
 
 
 def create_mask(mask):
@@ -113,24 +131,39 @@ def get_candy_count(contours, image):
     height, width = image.shape[:2]
     candy_count = 0
     for contour in contours:
-        if cv2.contourArea(contour) > 0.0003 * height * width:
+        if cv2.contourArea(contour) > 0.001 * height * width:
             candy_count += 1
     return candy_count
 
 
+def detect_candies(index, img_dir, img_names, hsv_l, hsv_h):
+    candies = [0, 0, 0, 0]
+    next_image = cv2.imread(os.path.join(img_dir, img_names[index]))
+    for i in range(len(hsv_l)):
+        in_range = process_image(next_image, hsv_l[i], hsv_h[i])
+        mask = create_mask(in_range)
+        contours = get_contours(mask)
+        count = get_candy_count(contours, next_image)
+        candies[i] = count
+    return img_names[index], {'red': candies[0], 'yellow': candies[1], 'green': candies[2], 'purple': candies[3]}
+
+
 def main():
-    global low_H, low_S, low_V, high_H, high_S, high_V, window_trackbar_name
+    global low_H, low_S, low_V, high_H, high_S, high_V, window_trackbar_name, area_V
 
     image_dir = get_images_dir()
     image_list = os.listdir(image_dir)
     current_image_index = 0
+    fixed_hsv_values_l = np.array([[106, 155, 62], [88, 163, 88],
+                                   [44, 121, 35], [106, 52, 49]]) #green, purple, red, yellow settings
+    fixed_hsv_values_h = np.array([[123, 255, 252], [115, 239, 246],
+                                   [86, 255, 229], [178, 174, 115]])
     image, mask = get_next_image(current_image_index, image_dir, image_list,
                                  np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
 
     #json import
     with open('sources/the_truth.json') as user_file:
         reference_json = json.load(user_file)
-        # print(reference_json['00.jpg']['red'])
 
 
     cv2.namedWindow('image', cv2.WINDOW_NORMAL)
@@ -143,13 +176,15 @@ def main():
     cv2.createTrackbar(high_S_name, window_trackbar_name, high_S, max_value, on_high_S_thresh_trackbar)
     cv2.createTrackbar(low_V_name, window_trackbar_name, low_V, max_value, on_low_V_thresh_trackbar)
     cv2.createTrackbar(high_V_name, window_trackbar_name, high_V, max_value, on_high_V_thresh_trackbar)
+    cv2.createTrackbar(area_name, window_trackbar_name, 0, max_area, on_area_V_thresh_trackbar)
 
     while True:
-
+        #for single value tuning:
         in_range = process_image(image, np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         blended_contours = blend_with_mask(image, mask)
         cv2.drawContours(blended_contours, get_contours(mask), -1, (255,0,0), 3)
 
+        #for candies detection:
         cv2.imshow(window_trackbar_name, in_range)
         cv2.imshow('image', blended_contours)
 
@@ -167,7 +202,13 @@ def main():
                 current_image_index = 0
             image, mask = get_next_image(current_image_index, image_dir, image_list,
                                          np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
+        elif key == ord('d'):
+            filename, candies = detect_candies(current_image_index, image_dir, image_list,
+                                               fixed_hsv_values_l, fixed_hsv_values_h)
+            print("Real values: ", filename, reference_json[filename])
+            print("Estimated values: ", filename, candies)
         elif key == 27:
+            save_hsv_config()
             break
 
     # Destroy the window
