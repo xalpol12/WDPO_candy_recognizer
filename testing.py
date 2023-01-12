@@ -12,7 +12,7 @@ import json
 with open('sources/hsv_config.json') as user_file:
     hsv_json = json.load(user_file)
 
-selected_color = 'yellow'
+selected_color = 'red'
 
 max_value = 255
 max_value_H = 360 // 2
@@ -31,7 +31,7 @@ low_V_name = 'Low V'
 high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
-area_name = "Area"
+area_name = "Area"  # area = (one_candy_area / picture_area) * 100
 
 #on_change trackbar behaviour:
 def on_low_H_thresh_trackbar(val):
@@ -68,9 +68,11 @@ def on_high_V_thresh_trackbar(val):
 def on_area_V_thresh_trackbar(val):
     global area_V
     cv2.setTrackbarPos(val, window_trackbar_name, area_V)
-    area_V = val / 10000
+    area_V = val / 10000  #real area value is between 0.0001 - 0.1
+
 
 def save_hsv_config():
+    global hsv_json
     values = {'low_H': low_H,
               'low_S': low_S,
               'low_V': low_V,
@@ -79,9 +81,10 @@ def save_hsv_config():
               'high_V': high_V,
               'area_V': area_V}
     configuration = {selected_color: values}
-
+    hsv_json[selected_color] = values
     with open('sources/hsv_config.json', 'w') as user_file:
-        json.dump(configuration, user_file)
+        # json.dump(configuration, user_file)
+        json.dump(hsv_json, user_file)
 
 
 
