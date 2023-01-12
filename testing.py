@@ -12,7 +12,11 @@ import json
 with open('sources/hsv_config.json') as user_file:
     hsv_json = json.load(user_file)
 
-selected_color = 'red'
+
+# INPUT COLOR HERE #
+selected_color = 'yellow'
+#                  #
+
 
 max_value = 255
 max_value_H = 360 // 2
@@ -80,8 +84,7 @@ def update_current_color_config():  #update chosen color with parameters from tr
               'high_S': high_S,
               'high_V': high_V,
               'area_V': area_V}
-    configuration = {selected_color: values}
-    return configuration
+    return values
 
 
 def save_hsv_config():  #update json file that stores config for all colors
@@ -165,7 +168,7 @@ def get_candy_count(contours, image):
     height, width = image.shape[:2]
     candy_count = 0
     for contour in contours:
-        if cv2.contourArea(contour) > 0.001 * height * width:
+        if cv2.contourArea(contour) > 0.0001 * height * width: #TODO: implement area color-dependent check
             candy_count += 1
     return candy_count
 
@@ -233,7 +236,7 @@ def main():
             image, mask = get_next_image(current_image_index, image_dir, image_list,
                                          np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         elif key == ord('d'):
-            hsv_config_low, hsv_config_high =  get_current_hsv_config()
+            hsv_config_low, hsv_config_high = get_current_hsv_config()
             filename, candies = detect_candies(current_image_index, image_dir, image_list,
                                                hsv_config_low, hsv_config_high)
             print("Real values: ", filename, reference_json[filename])
