@@ -170,6 +170,7 @@ def main():
 
 
     cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('in_range', cv2.WINDOW_NORMAL)
     cv2.namedWindow(window_trackbar_name, cv2.WINDOW_NORMAL)
 
     # create trackbars:
@@ -188,10 +189,11 @@ def main():
         cv2.drawContours(blended_contours, get_contours(mask), -1, (255,0,0), 3)
 
         #for candies detection:
-        cv2.imshow(window_trackbar_name, in_range)
+        cv2.imshow(window_trackbar_name, '')
+        cv2.imshow('in_range', in_range)
         cv2.imshow('image', blended_contours)
 
-        # switching images using 'w' and 'q'
+        # switching images using 'w' and 'q', detect using current setting 'd', save config 'esc'
         key = cv2.waitKey(10)
         if key == ord('q'):
             current_image_index -= 1
