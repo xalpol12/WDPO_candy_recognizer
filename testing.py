@@ -4,20 +4,17 @@ import numpy as np
 import json
 from tqdm import tqdm
 
-#HSV values for different colors:
-#green low_hsv = [44, 121, 35]  high_hsv = [86, 255, 229]
-#purple (do sprawdzenia) low_hsv = [106, 52, 49] high_hsv = [178, 174, 115]
-#red low_hsv = [106, 155, 62] high_hsv = [123, 255, 252]
-#yellow low_hsv = [88, 163, 88] high_hsv = [115, 239, 246]
+
+#===INPUT COLOR HERE===#
+selected_color = 'purple'
+#=====================#
+
+#===INPUT DATA DIRECTORY HERE===#
+image_dir = r'C:\Users\dawidexpompa2000\Desktop\Srudia\PO5_WDPO\Laby\WDPO_candy_recognizer\data'
+#==============================#
 
 with open('sources/hsv_config.json') as user_file:
     hsv_json = json.load(user_file)
-
-
-# INPUT COLOR HERE #
-selected_color = 'purple'
-#                  #
-
 
 max_value = 255
 max_value_H = 360 // 2
@@ -126,7 +123,7 @@ def get_current_hsv_config():
 
 
 def get_images_dir():  #stores and returns datapath to a folder with sample images
-    image_dir = r'C:\Users\dawidexpompa2000\Desktop\Srudia\PO5_WDPO\Laby\WDPO_candy_recognizer\data'
+    global image_dir
     image_dir = image_dir.replace('\\', '/')  #change backslashes to forward slashes
     return image_dir
 
