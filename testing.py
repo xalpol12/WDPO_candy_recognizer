@@ -15,7 +15,7 @@ with open('sources/hsv_config.json') as user_file:
 
 
 # INPUT COLOR HERE #
-selected_color = 'yellow'
+selected_color = 'purple'
 #                  #
 
 
@@ -141,7 +141,7 @@ def get_next_image(index, image_dir, image_list, low_HSV, high_HSV):
 def process_image(image, low_HSV, high_HSV):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     # blurred = cv2.medianBlur(gray, 7)
-    filtered = cv2.bilateralFilter(gray, 9, 20, 10)
+    filtered = cv2.bilateralFilter(gray, 5, 20, 10)
     threshold = cv2.inRange(filtered, low_HSV, high_HSV)
     return threshold
 
