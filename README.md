@@ -1,142 +1,83 @@
-# Wprowadzenie do Systemów Wizyjnych
+# Candy recognizer 
+## End of semester project for Introduction to Image Processing
+> The recognition and counting of round, m&m's-like candies in four colors: green, yellow, red and purple in a given photo
 
-## Politechnika Poznańska, Instytut Robotyki i Inteligencji Maszynowej
+## MARPE indicator for final dataset: 2.70 
+MARPE indicator for test dataset: 0.98 (if implemented correctly) \
+MARPE indicator is calculated using formula: \
+MeanAbsoluteRelativePercentageError[%] = $\frac{100}{n} \Sigma^{n-1}_{t=0} \frac{ |y_r-\hat{y}_r| + |y_y-\hat{y}_y| + |y_g-\hat{y}_g| + |y_p-\hat{y}_p|}{y_r + y_y + y_g + y_p}$
 
-<p align="center">
-  <img width="180" height="180" src="./readme_files/logo.svg">
-</p>
+## General Information
+- The main goal of candy_recognizer is to process an image of different colored candies and return number of candies of the same color
+- Algorithm focuses on standard image processing techniques to filter a contour of a given color (operating on HSV values)
+- Chain of operations: 
+  * convert from RGB to HSV
+  * apply light bilateral filter
+  * threshold using inRange() with selected parameters (depending on a color)
+  * create a kernel with cv2.MORPH_ELLIPSE
+  * obtain a mask using a morphological operation cv2.MORPH_CLOSE and then cv2.MORPH_OPEN with created kernel
+  * use findContours() with created mask
+  * iterate through every contour, if bigger than fixed size then count as detected 
+    ```python
+    if cv2.contourArea(contour) > area * height * width:
+    ```
+    where *height* and *width* are dependent on the dimensions of the photo
 
-# **Projekt zaliczeniowy: zliczanie cukierków**
 
-Wraz z postępem technologicznym w obszarze sensorów wizyjnych wzrosło zapotrzebowanie na rozwiązania umożliwiające automatyzację procesów z wykorzystaniem wizyjnej informacji zwrotnej. Ponadto rozwój naukowy w zakresie algorytmów przetwarzania obrazu umożliwia wyciąganie ze zdjęć takich informacji jak ilość obiektów, ich rozmiar, położenie, a także orientacja. Jedną z aplikacji wykorzystujących przetwarzanie obrazu jest automatyczna kontrola ilości obiektów na linii produkcyjnej wraz z rozróżnieniem ich klasy np. w celu ich sortowania w dalszym kroku.
+## Technologies Used
+- Python 3.9
+- OpenCV 4.5.3
+- NumPy 1.24.1
+- tqdm 4.64.1
 
-## Changelog
-**Ostatnia edycja:** 25.11.2022
+
+## Features
+- Detecting the number of candies in a given photo or set of photos (*detect.py*)
+- Communication with external website to perform detection on a final dataset (*check.py*)
+- Additional script for configuration and fine-tuning of the algorithm using test dataset (*testing.py*):
+  * trackbars for configuration of lower and upper boundries of HSV detection as well as an area detection
+  * reading from and writing to a .json configuration file to store configured parameters of the algorithm
 
 
-## Zadanie
+## Screenshots
+![Example screenshot](./img/screenshot.png)
+<!-- If you have screenshots you'd like to share, include them here. -->
 
-Zadanie projektowe polega na przygotowaniu algorytmu wykrywania i zliczania kolorowych cukierków znajdujących się na zdjęciach. Dla uproszczenia zadania w zbiorze danych występują jedynie 4 kolory cukierków:
-- czerwony
-- żółty
-- zielony
-- fioletowy
 
-Wszystkie zdjęcia zostały zarejestrowane "z góry", ale z różnej wysokości i pod różnym kątem. Ponadto obrazy różnią się między sobą poziomem oświetlenia oraz oczywiście ilością cukierków.
-
-Poniżej przedstawione zostało przykładowe zdjęcie ze zbioru danych i poprawny wynik detekcji dla niego:
-
-```bash
-{
-  ...,
-  "37.jpg": {
-    "red": 2,
-    "yellow": 2,
-    "green": 2,
-    "purple": 2
-  },
-  ...
-}
+## Setup
+A requirements.txt with versions of currently used packages is located in the main folder.
+To fine-tune the algorithm use *testing.py*. 
+```python
+#===INPUT COLOR HERE===#
+selected_color = 'purple'
+#=====================#
 ```
+Change **selected_color** to one of the given: *green*, *yellow*, *purple*, *red* to change parameters of this color detection.
 
-<p align="center">
-  <img width="750" height="500" src="./data/37.jpg">
-</p>
-
-## Struktura projektu
-
-Szablon projektu zliczania cukierków na zdjęciach dostępny jest w serwisie [GitHub](https://github.com/PUTvision/WDPOProject) i ma następującą strukturę:
-
-```bash
-.
-├── data
-│   ├── 00.jpg
-│   ├── 01.jpg
-│   └── 02.jpg
-├── readme_files
-├── detect.py
-├── README.md
-└── requirements.txt
+```python
+#===INPUT DATA DIRECTORY HERE===#
+image_dir = r'C:\Users\dawidexpompa2000\Desktop\Srudia\PO5_WDPO\Laby\WDPO_candy_recognizer\data'
+#==============================#
 ```
+Change **image_dir** to your data folder location.
 
-Katalog [`data`](./data) zawiera przykłady, na podstawie których w pliku [`detect.py`](./detect.py) przygotowany ma zostać algorytm zliczania cukierków. Funkcja `main` w pliku `detect.py` powinna pozostać bez zmian. 
 
-### Wykorzystanie szablonu
+## Usage
+In *testing.py* file, after starting the program you can use keys:
+* Q and W to switch back and forth through a content of a currently selected folder (default: ./data folder)
+* D to detect candies on a currently shown picture (prints: filename.extension + real and detected values)
+* P to detect candies on all pictures in a currently selected folder (prints: MARPE indicator)
+* esc to save trackbar values to .json file and exit program
 
-W przypadku chęci wykorzystania przygotowanego szablonu oraz systemu kontroli wersji w postaci serwisu GitHub możliwe jest stworzenie własnego repozytorium na podstawie szablonu. W tym celu należy poprzez przycisk `Use this template` utworzyć nowe repozytorium wybierając swoje konto jako właściciela, nadając mu własną nazwę i obowiązkowo ustawiając widzialność jako **prywatne**. Powyższe kroki zostały przedstawione na załączonych zdjęciach.
 
-<p align="center">
-  <img width="900" height="200" src="./readme_files/create_repo_from_template_01.png">
-</p>
-<p align="center">
-  <img width="600" height="500" src="./readme_files/create_repo_from_template_02.png">
-</p>
+## Project Status
+Project is: _complete_ 
 
-### Biblioteki
 
-Interpreter testujący projekty będzie miał zainstalowane biblioteki:
-- [OpenCV](https://docs.opencv.org/master/) w wersji 4.5.3.56
-- [NumPy](https://numpy.org/) w wersji 1.19.5
-- [Click](https://palletsprojects.com/p/click/) w wersji 7.1.2
-- [tqdm](https://tqdm.github.io/) w wersji 4.62.3
+## Room for Improvement
+Room for improvement:
+- Fine-tune parameters for different colors to decrease MARPE indicator 
+- Implement try except blocks
 
-Natomiast w przypadku wykorzystania w projekcie dodatkowych bibliotek należy przygotować plik `requirements.txt`, zawierający informacje o dodatkowym pakiecie i jego wersji, zgodnie z poniższym przykładem:
-
-```bash
-scikit-image==0.18.3
-matplotlib
-```
-
-Więcej informacji na temat zastosowania plików `requirements.txt` można znaleźć w:
-- [What is the python requirements.txt?](https://www.idkrtm.com/what-is-the-python-requirements-txt/)
-- [Use requirements.txt](https://www.jetbrains.com/help/pycharm/managing-dependencies.html)
-
-### Wywołanie programu
-
-Skrypt `detect.py` przyjmuje 2 parametry wejściowe:
-- `data_path` - ścieżkę do folderu z danymi (zdjęciami)
-- `output_file_path` - ścieżkę do pliku z wynikami
-
-```bash
-$ python3 detect.py --help
-
-Options:
-  -p, --data_path TEXT         Path to data directory
-  -o, --output_file_path TEXT  Path to output file
-  --help                       Show this message and exit.
-```
-
-W konsoli systemu Linux skrypt można wywołać z katalogu projektu w następujący sposób:
-
-```bash
-python3 detect.py -p ./data -o ./results.json
-```
-
-Konfiguracja parametrów wejściowych skryptu w środowisku PyCharm została opisana w pliku [PyCharm_input_configuration.md](./PyCharm_input_configuration.md).
-
-## Przesyłanie rozwiązania
-
-Stworzone rozwiązanie należy skompresować do formatu `ZIP`, a wyjściowy plik nazwać numerem indeksu (np. 123456.zip). Zadanie to można przykładowo zrealizować w systemach Linux z wykorzystaniem komendy systemowej `zip` w terminalu tak, jak to zostało przedstawione poniżej:
-
-```bash
-zip <NUMER INDEKSU>.zip detect.py requirements.txt
-```
-
-Skompresowany plik należy wstawić w odpowiednim miejscu na platformie eKursy.
-
-**Uwaga:** w pliku `.zip` powinien znajdować się jedynie bezpośrednio plik `detect.py` oraz opcjonalnie `requirements.txt`.
-
-## Ewaluacja rozwiązań
-
-Przesłane rozwiązania zostaną sprawdzone pod kątem plagiatu oraz z wykorzystaniem poniższego wzoru ocenione będzie działanie algorytmu zliczania cukierków:  
-
-<p align="center">
-  <img src="https://latex.codecogs.com/svg.image?\bg_white&space;Mean&space;Absolute&space;Relative&space;Percentage&space;Error&space;[%]&space;=&space;\frac{100}{n}\sum_{t=0}^{n-1}\frac{\left|y_{r}-\widehat{y_{r}}\right|&space;&plus;&space;\left|y_{y}-\widehat{y_{y}}\right|&space;&plus;&space;\left|y_{g}-\widehat{y_{g}}\right|&space;&plus;&space;\left|y_{p}-\widehat{y_{p}}\right|}{y_{r}&plus;y_{y}&plus;y_{g}&plus;y_{p}}" title="\bg_white Mean Absolute Relative Percentage Error [%] = \frac{100}{n}\sum_{t=0}^{n-1}\frac{\left|y_{a}-\widehat{y_{a}}\right| + \left|y_{b}-\widehat{y_{b}}\right| + \left|y_{o}-\widehat{y_{o}}\right|}{y_{a}+y_{b}+y_{o}}" style="background-color: white"/>
-</p>
-
-Gdzie:
-- ![](https://render.githubusercontent.com/render/math?math=n) oznacza liczbę obrazów
-- ![](https://render.githubusercontent.com/render/math?math=y_x) oznacza rzeczywistą ilość danego koloru
-- ![](https://render.githubusercontent.com/render/math?math=\widehat{y_x}) oznacza przewidzianą ilość danego koloru
-
-Końcowy zbiór ewaluacyjny, na którym testowany będzie algorytm jest niepubliczny i niedostępny w czasie realizacji projektu. Do dyspozycji studentów w całości dostępny jest zbiór treningowy dostępny w katalogu [data](./data).
+To do:
+- [ ] Better visualization of the working algorithm (draw all detected contours)
