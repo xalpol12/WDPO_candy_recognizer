@@ -41,6 +41,11 @@ MeanAbsoluteRelativePercentageError[%] = $\frac{100}{n} \Sigma^{n-1}_{t=0} \frac
 
 ## Screenshots
 ![Example screenshot](./img/screenshot.png)
+![Purple detection](./readme_screenshots/purple_put.png)
+![Yellow detection](./readme_screenshots/yellow.png)
+![Trackbars](./readme_screenshots/trackbars.png)
+![Detection in console](./readme_screenshots/detection.png)
+![Final MARPE](./readme_screenshots/marpe_final.png)
 <!-- If you have screenshots you'd like to share, include them here. -->
 
 
