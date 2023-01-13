@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 
 #===INPUT COLOR HERE===#
-selected_color = 'purple'
+selected_color = 'yellow'
 #=====================#
 
 #===INPUT DATA DIRECTORY HERE===#
