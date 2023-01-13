@@ -169,8 +169,6 @@ def get_contours_bigger_than(mask_open, image, area):
     return contours_filtered
 
 
-
-
 def blend_with_mask(image, mask):
     mask_color = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
     blended = cv2.addWeighted(image, 1, mask_color, 1, 0)
