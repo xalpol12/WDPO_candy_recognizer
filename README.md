@@ -40,7 +40,6 @@ MeanAbsoluteRelativePercentageError[%] = $\frac{100}{n} \Sigma^{n-1}_{t=0} \frac
 
 
 ## Screenshots
-![Example screenshot](./img/screenshot.png)
 ![Purple detection](./readme_screenshots/purple_put.png)
 ![Yellow detection](./readme_screenshots/yellow.png)
 ![Trackbars](./readme_screenshots/trackbars.png)
