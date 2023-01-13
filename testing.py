@@ -25,7 +25,7 @@ max_area = 1000
 low_H = hsv_json[selected_color]["low_H"]
 low_S = hsv_json[selected_color]["low_S"]
 low_V = hsv_json[selected_color]["low_V"]
-area_V = hsv_json[selected_color]["area_V"] #TODO: multiply by 10000 when assigning to trackbar
+area_V = hsv_json[selected_color]["area_V"]
 high_H = hsv_json[selected_color]["high_H"]
 high_S = hsv_json[selected_color]["high_S"]
 high_V = hsv_json[selected_color]["high_V"]
@@ -74,7 +74,7 @@ def on_high_V_thresh_trackbar(val):
 def on_area_V_thresh_trackbar(val):
     global area_V
     cv2.setTrackbarPos(area_name, window_trackbar_name, val)
-    area_V = val / 10000  #real area value is between 0.0001 - 0.1
+    area_V = val / 100000  #real area value is between 0.0001 - 0.1
 
 
 def update_current_color_config():  #update chosen color with parameters from trackbars
@@ -104,7 +104,8 @@ def get_color_hsv_config(color):  #pass color name, get config for low and high 
     high_values = [[hsv_json[color]["high_H"]],
                    [hsv_json[color]["high_S"]],
                    [hsv_json[color]["high_V"]]]
-    return low_values, high_values
+    area = [hsv_json[color]["area_V"]]
+    return low_values, high_values, area
 
 
 def get_current_hsv_config():
@@ -113,14 +114,15 @@ def get_current_hsv_config():
     #                                [44, 121, 35], [106, 52, 49]]) #green, purple, red, yellow settings
     # fixed_hsv_values_h = np.array([[123, 255, 252], [115, 239, 246],
     #                                [86, 255, 229], [178, 174, 115]])
-    hsv_values_low = []; hsv_values_high = []
+    hsv_values_low = []; hsv_values_high = []; areas = [];
     hsv_json[selected_color] = update_current_color_config()
     colors = ['red', 'yellow', 'green', 'purple']
     for color in colors:
-        low, high = get_color_hsv_config(color)
+        low, high, area = get_color_hsv_config(color)
         hsv_values_low.append(low)
         hsv_values_high.append(high)
-    return np.array(hsv_values_low), np.array(hsv_values_high)
+        areas.append(area)
+    return np.array(hsv_values_low), np.array(hsv_values_high), np.array(areas)
 
 
 def get_images_dir():  #stores and returns datapath to a folder with sample images
@@ -156,6 +158,19 @@ def get_contours(mask_open):
     return contours
 
 
+def get_contours_bigger_than(mask_open, image, area):
+    contours, _ = cv2.findContours(mask_open, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    height = 0; width = 0
+    height, width = image.shape[:2]
+    contours_filtered = []
+    for contour in contours:
+        if cv2.contourArea(contour) > area * height * width:
+            contours_filtered.append(contour)
+    return contours_filtered
+
+
+
+
 def blend_with_mask(image, mask):
     mask_color = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
     blended = cv2.addWeighted(image, 1, mask_color, 1, 0)
@@ -164,37 +179,36 @@ def blend_with_mask(image, mask):
 # 55 x 53 = 2 915
 
 
-def get_candy_count(contours, image):
+def get_candy_count(contours, image, area):
     height = 0; width = 0
     height, width = image.shape[:2]
     candy_count = 0
     for contour in contours:
-        if cv2.contourArea(contour) > 0.0001 * height * width: #TODO: implement area color-dependent check
+        if cv2.contourArea(contour) > area * height * width:
             candy_count += 1
     return candy_count
 
 
-def detect_candies(index, img_dir, img_names, hsv_l, hsv_h):
+def detect_candies(index, img_dir, img_names, hsv_l, hsv_h, areas):
     candies = [0, 0, 0, 0]
     next_image = cv2.imread(os.path.join(img_dir, img_names[index]))
     for i in range(len(hsv_l)):
         in_range = process_image(next_image, hsv_l[i], hsv_h[i])
         mask = create_mask(in_range)
         contours = get_contours(mask)
-        count = get_candy_count(contours, next_image)
+        count = get_candy_count(contours, next_image, areas[i])
         candies[i] = count
     return img_names[index], {'red': candies[0], 'yellow': candies[1], 'green': candies[2], 'purple': candies[3]}
 
 
-def detect_candies_all(img_dir, img_names, hsv_l, hsv_h, reference_json):
+def detect_candies_all(img_dir, img_names, hsv_l, hsv_h, areas, reference_json):
     index = 0
     y_real = []
     y_estimated = []
-    while index < tqdm(len(img_names)):
-        filename, candies = detect_candies(index, img_dir, img_names, hsv_l, hsv_h)
+    for index in tqdm(range(len(img_names))):
+        filename, candies = detect_candies(index, img_dir, img_names, hsv_l, hsv_h, areas)
         y_real.append(reference_json[filename])
         y_estimated.append(candies)
-        index += 1
     MARPE = calculate_MARPE(y_real, y_estimated)
     return MARPE
 
@@ -239,13 +253,17 @@ def main():
     cv2.createTrackbar(high_S_name, window_trackbar_name, high_S, max_value, on_high_S_thresh_trackbar)
     cv2.createTrackbar(low_V_name, window_trackbar_name, low_V, max_value, on_low_V_thresh_trackbar)
     cv2.createTrackbar(high_V_name, window_trackbar_name, high_V, max_value, on_high_V_thresh_trackbar)
-    cv2.createTrackbar(area_name, window_trackbar_name, 0, max_area, on_area_V_thresh_trackbar)
+    cv2.createTrackbar(area_name, window_trackbar_name, int(area_V * 100000), max_area, on_area_V_thresh_trackbar)
 
     while True:
         #for single value tuning:
         in_range = process_image(image, np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         blended_contours = blend_with_mask(image, mask)
-        cv2.drawContours(blended_contours, get_contours(mask), -1, (255,0,0), 3)
+        # cv2.drawContours(blended_contours, get_contours(mask), -1, (255,0,0), 3)  #draw all contours
+        contours = get_contours_bigger_than(mask, image, area_V)
+        cv2.drawContours(blended_contours, contours, -1, (255,0,0), 3)  #draw only countours bigger than area
+        blended_contours = cv2.putText(blended_contours, str(len(contours)), (150,150), cv2.FONT_ITALIC,
+                                       5, (0, 0, 0), 5, cv2.LINE_AA)
 
         #for candies detection:
         cv2.imshow(window_trackbar_name, in_range)
@@ -266,15 +284,15 @@ def main():
             image, mask = get_next_image(current_image_index, image_dir, image_list,
                                          np.array([low_H, low_S, low_V]), np.array([high_H, high_S, high_V]))
         elif key == ord('d'):
-            hsv_config_low, hsv_config_high = get_current_hsv_config()
+            hsv_config_low, hsv_config_high, areas = get_current_hsv_config()
             filename, candies = detect_candies(current_image_index, image_dir, image_list,
-                                               hsv_config_low, hsv_config_high)
+                                               hsv_config_low, hsv_config_high, areas)
             print("Real values: ", filename, reference_json[filename])
             print("Estimated values: ", filename, candies)
         elif key == ord('p'):
-            hsv_config_low, hsv_config_high = get_current_hsv_config()
+            hsv_config_low, hsv_config_high, areas = get_current_hsv_config()
             MARPE = detect_candies_all(image_dir, image_list,
-                               hsv_config_low, hsv_config_high, reference_json)
+                                       hsv_config_low, hsv_config_high, areas, reference_json)
             print(MARPE)
 
         elif key == 27:
