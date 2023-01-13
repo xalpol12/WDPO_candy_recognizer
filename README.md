@@ -37,6 +37,8 @@ MeanAbsoluteRelativePercentageError[%] = $\frac{100}{n} \Sigma^{n-1}_{t=0} \frac
 - Additional script for configuration and fine-tuning of the algorithm using test dataset (*testing.py*):
   * trackbars for configuration of lower and upper boundries of HSV detection as well as an area detection
   * reading from and writing to a .json configuration file to store configured parameters of the algorithm
+  * displaying the number of candies found with the currently configured color parameters
+  * marking contours that are currently taken into account by the algorithm
 
 
 ## Screenshots
