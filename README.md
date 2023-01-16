@@ -3,7 +3,7 @@
 > The recognition and counting of round, m&m's-like candies in four colors: green, yellow, red and purple in a given photo
 
 ## MARPE indicator for final dataset: 2.70 
-MARPE indicator for test dataset: 0.98 (if implemented correctly) \
+MARPE indicator for test dataset: 2.5 (if implemented correctly) \
 MARPE indicator is calculated using formula: \
 MeanAbsoluteRelativePercentageError[%] = $\frac{100}{n} \Sigma^{n-1}_{t=0} \frac{ |y_r-\hat{y}_r| + |y_y-\hat{y}_y| + |y_g-\hat{y}_g| + |y_p-\hat{y}_p|}{y_r + y_y + y_g + y_p}$
 
