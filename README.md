@@ -34,8 +34,8 @@ MeanAbsoluteRelativePercentageError[%] = $\frac{100}{n} \Sigma^{n-1}_{t=0} \frac
 ## Features
 - Detecting the number of candies in a given photo or set of photos (*detect.py*)
 - Communication with external website to perform detection on a final dataset (*check.py*)
-- Additional script for configuration and fine-tuning of the algorithm using test dataset (*testing.py*):
-  * trackbars for configuration of lower and upper boundries of HSV detection as well as an area detection
+- Additional script for configuration and fine-tuning the algorithm using test dataset (*testing.py*):
+  * trackbars for configuration of lower and upper boundries of HSV detection, as well as an area detection
   * reading from and writing to a .json configuration file to store configured parameters of the algorithm
   * displaying the number of candies found with the currently configured color parameters
   * marking contours that are currently taken into account by the algorithm
@@ -71,8 +71,8 @@ Change **image_dir** to your data folder location.
 ## Usage
 In *testing.py* file, after starting the program you can use keys:
 * Q and W to switch back and forth through a content of a currently selected folder (default: ./data folder)
-* D to detect candies on a currently shown picture (prints: filename.extension + real and detected values)
-* P to detect candies on all pictures in a currently selected folder (prints: MARPE indicator)
+* D to detect candies in a currently shown picture (prints: filename.extension + real and detected values)
+* P to detect candies in all pictures in a currently selected folder (prints: MARPE indicator)
 * esc to save trackbar values to .json file and exit program
 
 
